@@ -1281,7 +1281,7 @@ var SumFunc = function.New(&function.Spec{
 		}
 
 		if args[0].LengthInt() == 0 { // Easy path
-			return cty.NilVal, errors.New("cannot sum an empty list")
+			return cty.NilVal, function.NewArgErrorf(0, "cannot sum an empty list")
 		}
 
 		arg := args[0].AsValueSlice()
@@ -1301,7 +1301,7 @@ var SumFunc = function.New(&function.Spec{
 		for _, v := range arg {
 
 			if err := gocty.FromCtyValue(v, &i); err != nil {
-				return cty.UnknownVal(cty.String), err
+				return cty.UnknownVal(cty.String), function.NewArgErrorf(0, "argument must be list, set, or tuple of number values.")
 			} else {
 				s += i
 			}
