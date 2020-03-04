@@ -1,7 +1,7 @@
 ---
 layout: "functions"
 page_title: "sum - Functions - Configuration Language"
-sidebar_current: "docs-funcs-collection-sort"
+sidebar_current: "docs-funcs-collection-sum"
 description: |-
   The sum function takes a list of numbers and returns the sum of those
   numbers.
