@@ -1264,6 +1264,53 @@ func sliceIndexes(args []cty.Value) (int, int, bool, error) {
 	return startIndex, endIndex, startKnown && endKnown, nil
 }
 
+// SumFunc constructs a function that returns the sum of all
+// numbers provided in a list
+var SumFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name: "list",
+			Type: cty.DynamicPseudoType,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+
+		if !args[0].CanIterateElements() {
+			return cty.NilVal, function.NewArgErrorf(0, "cannot sum noniterable")
+		}
+
+		if args[0].LengthInt() == 0 { // Easy path
+			return cty.NilVal, errors.New("cannot sum an empty list")
+		}
+
+		arg := args[0].AsValueSlice()
+		ty := args[0].Type()
+
+		var i float64
+		var s float64
+
+		if !ty.IsListType() && !ty.IsSetType() && !ty.IsTupleType() {
+			return cty.NilVal, function.NewArgErrorf(0, fmt.Sprintf("argument must be list, set, or tuple. Received %s", ty.FriendlyName()))
+		}
+
+		if !args[0].IsKnown() {
+			return cty.UnknownVal(cty.Number), nil
+		}
+
+		for _, v := range arg {
+
+			if err := gocty.FromCtyValue(v, &i); err != nil {
+				return cty.UnknownVal(cty.String), err
+			} else {
+				s += i
+			}
+		}
+
+		return cty.NumberFloatVal(s), nil
+	},
+})
+
 // TransposeFunc constructs a function that takes a map of lists of strings and
 // swaps the keys and values to produce a new map of lists of strings.
 var TransposeFunc = function.New(&function.Spec{
@@ -1587,6 +1634,11 @@ func SetProduct(sets ...cty.Value) (cty.Value, error) {
 // Slice extracts some consecutive elements from within a list.
 func Slice(list, start, end cty.Value) (cty.Value, error) {
 	return SliceFunc.Call([]cty.Value{list, start, end})
+}
+
+// Sum adds numbers in a list, set, or tuple
+func Sum(list cty.Value) (cty.Value, error) {
+	return SumFunc.Call([]cty.Value{list})
 }
 
 // Transpose takes a map of lists of strings and swaps the keys and values to
